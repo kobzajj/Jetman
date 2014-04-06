@@ -1,0 +1,215 @@
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/13/14 23:50:26
+trig.asm						     Page 1 - 1
+
+
+				; #########################################################################
+				;
+				;   trig.asm - Assembly file for EECS205 Assignment 3
+				;	Jacob Kobza 2/14/14
+				;
+				; #########################################################################
+
+				      .586
+				      .MODEL FLAT,STDCALL
+				      .STACK 4096
+				      option casemap :none  ; case sensitive
+
+				    include trig.inc	
+			      C ; #########################################################################
+			      C ;
+			      C ;   trig.inc - Includes for EECS205 Assignment 3
+			      C ;
+			      C ;
+			      C ; #########################################################################
+			      C 
+			      C ;; FIXED is a fixed point number (16 bit integer and 16 bit fractional components)
+			      C ;;    To convert a FIXED value in eax into an integer:  sar eax, 16
+			      C ;;    To convert an integer value in eax into a FIXED:  shl eax, 16
+			      C FIXED TYPEDEF DWORD
+			      C 
+			      C EXTERNDEF SINTAB:WORD 
+			      C 
+			      C FixedSin PROTO STDCALL dwAngle:FIXED 
+			      C FixedCos PROTO STDCALL dwAngle:FIXED
+			      C 
+			      C 
+			      C 
+			      C 
+			      C 
+
+ 00000000			.DATA
+
+				;;  These are some useful constants (fixed point values that correspond to important angles)
+ = 0001921F			PI_HALF = 102943           	;;  PI / 2
+ = 0003243F			PI =  205887	                ;;  PI 
+ = 0006487E			TWO_PI	= 411774                ;;  2 * PI 
+ = 00517CC1			PI_INC_RECIP =  5340353        	;;  256 / PI   (use this to find the table entry for a given angle
+					                        ;;              it is easier to use than divison would be)
+
+ 00000000			.CODE
+
+				;calculates the sine of a specified angle using a sine table and trig identities
+ 00000000			FixedSin PROC USES ebx ecx edx dwAngle:FIXED
+				LOCAL angleadjusted:DWORD, negative:DWORD
+
+
+ 00000009  C7 45 F8		mov negative, 0
+	   00000000
+ 00000010  8B 45 08		mov eax, dwAngle
+ 00000013  89 45 FC		mov angleadjusted, eax
+ 00000016			checksign:
+					;checks for sign of the angle and jumps to the appropriate instruction
+ 00000016  83 7D FC 00			cmp angleadjusted, 0
+ 0000001A  7D 02			jge checkperiodpositive
+ 0000001C  7C 12			jl checkperiodnegative
+ 0000001E			checkperiodpositive:
+					;subtracts 2pi until the value is between 0 and 2pi
+ 0000001E  81 7D FC			cmp angleadjusted, TWO_PI
+	   0006487E
+ 00000025  7C 18			jl checkquadrant
+ 00000027  81 6D FC			sub angleadjusted, TWO_PI
+	   0006487E
+ 0000002E  EB EE			jmp checkperiodpositive
+ 00000030			checkperiodnegative:
+					;adds 2pi until the value is between 0 and 2pi
+ 00000030  83 7D FC 00			cmp angleadjusted, 0
+ 00000034  7D 09			jge checkquadrant
+ 00000036  81 45 FC			add angleadjusted, TWO_PI
+	   0006487E
+ 0000003D  EB F1			jmp checkperiodnegative
+ 0000003F			checkquadrant:
+					;checks the quadrant of the angle on the unit circle
+ 0000003F  81 7D FC			cmp angleadjusted, PI_HALF
+	   0001921F
+ 00000046  7E 24			jle quad1
+ 00000048  81 7D FC			cmp angleadjusted, PI
+	   0003243F
+ 0000004F  7C 10			jl quad2
+ 00000051			quad34:
+					;subtracts pi from the angle and the sine value is negative if the
+					;angle is in quadrant 3 or 4
+ 00000051  81 6D FC			sub angleadjusted, PI
+	   0003243F
+ 00000058  C7 45 F8			mov negative, 1
+	   00000001
+ 0000005F  EB DE			jmp checkquadrant
+ 00000061			quad2:
+					;sin(x) = sin(pi - x) for quadrant 2
+ 00000061  BB 0003243F			mov ebx, PI
+ 00000066  2B 5D FC			sub ebx, angleadjusted
+ 00000069  89 5D FC			mov angleadjusted, ebx
+ 0000006C			quad1:
+ 0000006C  81 7D FC			cmp angleadjusted, PI_HALF
+	   0001921F
+ 00000073  75 07			jne notpiovertwo
+ 00000075  BB 00010000			mov ebx, 10000h
+ 0000007A  EB 25			jmp done
+ 0000007C			notpiovertwo:
+					;finds the appropriate value from the sin table to find the trig value
+ 0000007C  8B 45 FC			mov eax, angleadjusted
+ 0000007F  B9 00517CC1			mov ecx, PI_INC_RECIP
+ 00000084  F7 E9			imul ecx
+ 00000086  D1 E2			shl edx, 1
+ 00000088  81 C2 00000000 E		add edx, OFFSET SINTAB
+ 0000008E  BB 00000000			mov ebx, 0
+ 00000093  66| 8B 1A			mov bx, WORD PTR [edx]
+ 00000096  83 7D F8 00			cmp negative, 0
+ 0000009A  74 05			je done
+ 0000009C  F7 D3			not ebx
+ 0000009E  83 C3 01			add ebx, 1
+ 000000A1			done:
+ 000000A1  8B C3			mov eax, ebx
+					
+				ret
+
+ 000000AA			FixedSin ENDP
+
+				;--------------------------------------------------------------------------------------------------
+
+				;calculates cosine of an angle using the sine algorithm written above and trig identities
+ 000000AA			FixedCos PROC dwAngle:FIXED
+				LOCAL adjustedangle:DWORD
+
+ 000000B0  B8 0001921F		mov eax, PI_HALF
+ 000000B5  2B 45 08		sub eax, dwAngle
+ 000000B8  89 45 FC		mov adjustedangle, eax
+				INVOKE FixedSin, adjustedangle
+
+				ret
+
+ 000000C7			FixedCos ENDP
+
+
+				;; Define the functions FixedSin and FixedCos
+				;; Since we have thoroughly covered defining functions in class, its up to you from here on out...
+				;; Remember to include the 'ret' instruction or your program will hang
+				;; Also, don't forget to set your return values
+					
+					
+				END
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/13/14 23:50:26
+trig.asm						     Symbols 2 - 1
+
+
+
+
+Types:
+
+                N a m e                  Size     Attr
+
+FIXED  . . . . . . . . . . . . .	 00000004     DWord 
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000C7 Para	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+FixedCos . . . . . . . . . . . .	P Near	 000000AA _TEXT	Length= 0000001D Public STDCALL
+  dwAngle  . . . . . . . . . . .	DWord	 bp + 00000008
+  adjustedangle  . . . . . . . .	DWord	 bp - 00000004
+FixedSin . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000AA Public STDCALL
+  dwAngle  . . . . . . . . . . .	DWord	 bp + 00000008
+  angleadjusted  . . . . . . . .	DWord	 bp - 00000004
+  negative . . . . . . . . . . .	DWord	 bp - 00000008
+  checksign  . . . . . . . . . .	L Near	 00000016 _TEXT	
+  checkperiodpositive  . . . . .	L Near	 0000001E _TEXT	
+  checkperiodnegative  . . . . .	L Near	 00000030 _TEXT	
+  checkquadrant  . . . . . . . .	L Near	 0000003F _TEXT	
+  quad34 . . . . . . . . . . . .	L Near	 00000051 _TEXT	
+  quad2  . . . . . . . . . . . .	L Near	 00000061 _TEXT	
+  quad1  . . . . . . . . . . . .	L Near	 0000006C _TEXT	
+  notpiovertwo . . . . . . . . .	L Near	 0000007C _TEXT	
+  done . . . . . . . . . . . . .	L Near	 000000A1 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+PI_HALF  . . . . . . . . . . . .	Number	 0001921Fh   
+PI_INC_RECIP . . . . . . . . . .	Number	 00517CC1h   
+PI . . . . . . . . . . . . . . .	Number	 0003243Fh   
+SINTAB . . . . . . . . . . . . .	Word	 00000000 FLAT	External STDCALL
+TWO_PI . . . . . . . . . . . . .	Number	 0006487Eh   
+
+	   0 Warnings
+	   0 Errors

@@ -1,0 +1,145 @@
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/13/14 23:50:26
+stars.asm						     Page 1 - 1
+
+
+				; #########################################################################
+				;
+				;   stars.asm - Assembly file for EECS205 Assignment 1
+				;   Jacob Kobza
+				;   January 20th, 2014
+				;
+				; #########################################################################
+
+				;This program displays 17 stars in an X shape on the screen using the
+				;DrawStarReg routine, which takes esi and edi as the x and y parameters
+
+				      .586
+				      .MODEL FLAT,STDCALL
+				      .STACK 4096
+				      option casemap :none  ; case sensitive
+
+				    include stars.inc
+			      C ; #########################################################################
+			      C ;
+			      C ;   stars.inc - Includes for EECS205 Assignment 1
+			      C ;
+			      C ;
+			      C ; #########################################################################
+			      C 
+			      C 
+			      C DrawStarReg PROTO STDCALL ; Renders a star in the 2D drawing space
+			      C                         ; Uses register passed parameters:
+			      C                         ;      esi = x-coordinate
+			      C                         ;      edi = y-coordinate
+			      C 
+			      C DrawAllStars PROTO STDCALL ; Routine which uses DrawStarReg to create all the stars
+			      C 
+			      C EXTERNDEF STDCALL WinMain : NEAR
+			      C 
+
+ 00000000			.CODE
+
+				; Routine which uses DrawStarReg to create all the stars
+				; Screen dimensions are 640X480
+ 00000000			DrawAllStars PROC 
+
+				    ;The coordinates below create an X of stars on the screen
+				    ;Each pair of mov statements specifies the coordinates on the screen
+				    ;of the next star to be placed.
+ 00000000  BE 00000140		    mov esi, 320
+ 00000005  BF 000000F0		    mov edi, 240
+ 0000000A  E8 00000000 E	    call DrawStarReg
+ 0000000F  BE 00000040		    mov esi, 64
+ 00000014  BF 00000030		    mov edi, 48
+ 00000019  E8 00000000 E	    call DrawStarReg
+ 0000001E  BE 00000080		    mov esi, 128
+ 00000023  BF 00000060		    mov edi, 96
+ 00000028  E8 00000000 E	    call DrawStarReg
+ 0000002D  BE 000000C0		    mov esi, 192
+ 00000032  BF 00000090		    mov edi, 144
+ 00000037  E8 00000000 E	    call DrawStarReg
+ 0000003C  BE 00000100		    mov esi, 256
+ 00000041  BF 000000C0		    mov edi, 192
+ 00000046  E8 00000000 E	    call DrawStarReg
+ 0000004B  BE 00000180		    mov esi, 384
+ 00000050  BF 00000120		    mov edi, 288
+ 00000055  E8 00000000 E	    call DrawStarReg
+ 0000005A  BE 000001C0		    mov esi, 448
+ 0000005F  BF 00000150		    mov edi, 336
+ 00000064  E8 00000000 E	    call DrawStarReg
+ 00000069  BE 00000200		    mov esi, 512
+ 0000006E  BF 00000180		    mov edi, 384
+ 00000073  E8 00000000 E	    call DrawStarReg
+ 00000078  BE 00000240		    mov esi, 576
+ 0000007D  BF 000001B0		    mov edi, 432
+ 00000082  E8 00000000 E	    call DrawStarReg
+ 00000087  BE 00000240		    mov esi, 576
+ 0000008C  BF 00000030		    mov edi, 48
+ 00000091  E8 00000000 E	    call DrawStarReg
+ 00000096  BE 00000200		    mov esi, 512
+ 0000009B  BF 00000060		    mov edi, 96
+ 000000A0  E8 00000000 E	    call DrawStarReg
+ 000000A5  BE 000001C0		    mov esi, 448
+ 000000AA  BF 00000090		    mov edi, 144
+ 000000AF  E8 00000000 E	    call DrawStarReg
+ 000000B4  BE 00000180		    mov esi, 384
+ 000000B9  BF 000000C0		    mov edi, 192
+ 000000BE  E8 00000000 E	    call DrawStarReg
+ 000000C3  BE 00000100		    mov esi, 256
+ 000000C8  BF 00000120		    mov edi, 288
+ 000000CD  E8 00000000 E	    call DrawStarReg
+ 000000D2  BE 000000C0		    mov esi, 192
+ 000000D7  BF 00000150		    mov edi, 336
+ 000000DC  E8 00000000 E	    call DrawStarReg
+ 000000E1  BE 00000080		    mov esi, 128
+ 000000E6  BF 00000180		    mov edi, 384
+ 000000EB  E8 00000000 E	    call DrawStarReg
+ 000000F0  BE 00000040		    mov esi, 64
+ 000000F5  BF 000001B0		    mov edi, 432
+ 000000FA  E8 00000000 E	    call DrawStarReg
+ 000000FF  C3			    ret             ;; Don't delete this line
+				    
+ 00000100			DrawAllStars ENDP
+
+				END
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/13/14 23:50:26
+stars.asm						     Symbols 2 - 1
+
+
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000000 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000100 Para	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+DrawAllStars . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000100 Public STDCALL
+DrawStarReg  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+WinMain  . . . . . . . . . . . .	L Near	 00000000 FLAT	External STDCALL
+
+	   0 Warnings
+	   0 Errors
